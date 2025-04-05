@@ -26,7 +26,11 @@
 
       <!-- Interaktywna selekcja kart -->
       <div class="player-cards-section">
-        <label class="input-label">Twoje karty:</label>
+        <label class="input-label">Twoje karty (max 5):</label>
+        
+        <div v-if="selectedCards.length >= 5" class="max-cards-warning">
+          Osiągnięto limit 5 kart!
+        </div>
         
         <!-- Siatka wyboru kart -->
         <div class="card-buttons-grid">
@@ -39,8 +43,10 @@
               :class="{
                 'card-button': true,
                 'selected': isCardSelected(value, suit),
+                'disabled': !isCardSelected(value, suit) && selectedCards.length >= 5,
                 [suitColorClass(suit)]: true
               }"
+              :disabled="!isCardSelected(value, suit) && selectedCards.length >= 5"
             >
               {{ value }}{{ suit }}
             </button>
@@ -49,7 +55,7 @@
 
         <!-- Podgląd wybranych kart -->
         <div class="selected-cards-display">
-          <h3>Wybrane karty:</h3>
+          <h3>Wybrane karty: <span class="cards-count">{{ selectedCards.length }}/5</span></h3>
           <div v-if="selectedCards.length > 0" class="selected-cards-list">
             <span v-for="card in selectedCards" :key="`${card.value}${card.suit}`" 
                   class="selected-card" :class="suitColorClass(card.suit)">
@@ -129,10 +135,10 @@ export default defineComponent({
         c.value === value && c.suit === suit
       );
       
-      if (index === -1) {
-        this.selectedCards.push(card);
-      } else {
+      if (index !== -1) {
         this.selectedCards.splice(index, 1);
+      } else if (this.selectedCards.length < 5) {
+        this.selectedCards.push(card);
       }
     },
     isCardSelected(value: CardValue, suit: CardSuit): boolean {
@@ -156,6 +162,7 @@ export default defineComponent({
           const playableCard: PlayableCard = { ...card };
           
           if (card.value === '2') playableCard.effect = 'Następny gracz bierze 2 karty';
+          else if (card.value === '3') playableCard.effect = 'Następny gracz bierze 3 karty';
           else if (card.value === 'K' && card.suit === '♥') playableCard.effect = 'Następny gracz bierze 5 kart';
           else if (card.value === 'J') playableCard.effect = 'Żądaj wartości (np. "gram na 7")';
           else if (card.value === 'A') playableCard.effect = 'Żądaj koloru';
@@ -279,11 +286,36 @@ export default defineComponent({
   background-color: #e6f7ff;
 }
 
+.card-button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #f5f5f5;
+}
+
+.card-button.disabled:hover {
+  transform: none;
+}
+
+.max-cards-warning {
+  color: #e74c3c;
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-align: center;
+  padding: 5px;
+  background-color: #ffebee;
+  border-radius: 4px;
+}
+
 .selected-cards-display {
   margin-top: 20px;
   padding: 15px;
   background-color: #f8f9fa;
   border-radius: 8px;
+}
+
+.cards-count {
+  font-size: 0.9em;
+  color: #666;
 }
 
 .selected-cards-list {
